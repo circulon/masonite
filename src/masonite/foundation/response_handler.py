@@ -36,6 +36,9 @@ def response_handler(environ: dict, start_response: ResponseHandler) -> Iterator
         for provider in application.get_providers():
             application.resolve(provider.boot)
     except Exception as e:
+        from ..dumps.Dump import Dump
+        Dump(e)
+        Dump(provider)
         application.make("exception_handler").handle(e)
 
     """We Are Ready For Launch
