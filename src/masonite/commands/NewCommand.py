@@ -21,6 +21,36 @@ from ..utils.filesystem import get_module_dir, render_stub_file
 from ..utils.str import random_string
 from .Command import Command
 
+# Masonite brand colors (see .github/logo/masonite-mark.svg)
+VIOLET = (109, 79, 227)  # #6d4fe3 — interactive
+VIOLET_LIT = (156, 130, 242)  # #9c82f2 — lit face
+VIOLET_DEEP = (74, 51, 166)  # #4a33a6 — deep face
+MUTED = (94, 98, 106)  # #5e626a
+
+
+def supports_ansi():
+    return (
+        sys.stdout.isatty()
+        and os.environ.get("NO_COLOR") is None
+        and os.environ.get("TERM", "") != "dumb"
+    )
+
+
+def paint(text, rgb=None, bold=False):
+    """Color a string with truecolor ANSI codes when the terminal supports it."""
+    if not supports_ansi() or (rgb is None and not bold):
+        return text
+    prefix = ""
+    if rgb is not None:
+        prefix += "\x1b[38;2;{0};{1};{2}m".format(*rgb)
+    if bold:
+        prefix += "\x1b[1m"
+    return f"{prefix}{text}\x1b[0m"
+
+
+class WizardCancelled(Exception):
+    """Raised when the user cancels the wizard (Ctrl+C on a prompt)."""
+
 
 class DownloadProjectMixin:
     """Legacy flow used to craft a project from a custom GitHub/GitLab repository
@@ -256,23 +286,35 @@ class NewCommand(DownloadProjectMixin, Command):
     DATABASES = ["sqlite", "mysql", "postgres"]
     DB_DRIVER_PACKAGES = {"mysql": "pymysql", "postgres": "psycopg2-binary"}
 
+    _interactive = False
+
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.api_base_url = None
 
     def handle(self):
-        interactive = (
+        self._interactive = (
             self.io.is_interactive()
             and sys.stdin.isatty()
             and not self.option("no-input")
         )
+        interactive = self._interactive
+
+        try:
+            return self._craft(interactive)
+        except WizardCancelled:
+            self.line("")
+            self.comment("Cancelled. No project was created.")
+            return 1
+
+    def _craft(self, interactive):
+        if interactive:
+            self._banner()
 
         # resolve the target directory
         target = self.argument("target")
         if not target and interactive:
-            target = self.ask(
-                "<question>What is the name of your project?</>", "my-app"
-            )
+            target = self._prompt_text("What is the name of your project?", "my-app")
         target = (target or ".").strip()
 
         if target == ".":
@@ -307,32 +349,37 @@ class NewCommand(DownloadProjectMixin, Command):
         )
 
         self.line("")
-        self.info(f"Crafting your application in {target} ...")
+        self._title(f"Crafting your application in {target}")
         self.line("")
 
         self._copy_skeleton(target, to_dir)
-        self.info("✓ Application files created")
+        self._done("Application files created")
 
         self._patch_requirements(to_dir, database)
         self._create_env(to_dir, project_name, database)
-        self.info("✓ Environment file created (.env)")
+        self._done(f"Environment file created (.env, {database})")
 
         self._generate_key(to_dir)
-        self.info("✓ Application key set")
+        self._done("Application key set")
 
         if api:
             self._enable_api(to_dir)
-            self.info("✓ API scaffolding enabled (config/api.py)")
+            self._done("API scaffolding enabled (config/api.py)")
 
         venv_python = None
         if with_venv:
+            self._working(
+                "Creating .venv and installing dependencies (this may take a minute)"
+            )
             venv_python = self._create_venv_and_install(to_dir)
+            if venv_python:
+                self._done("Dependencies installed (.venv)")
 
         if not api and preset not in ("tailwind", "none"):
             self._apply_preset(to_dir, preset, venv_python)
         elif preset == "none":
             self._remove_frontend(to_dir)
-            self.info("✓ Frontend scaffolding removed")
+            self._done("Frontend scaffolding removed")
 
         if with_git:
             self._git_init(to_dir)
@@ -340,7 +387,7 @@ class NewCommand(DownloadProjectMixin, Command):
         self._print_next_steps(target, with_venv)
 
         if interactive and not self.option("no-serve"):
-            if self.confirm("Start the development server now?", True):
+            if self._prompt_confirm("Start the development server now?", True):
                 self._serve(to_dir, venv_python)
 
     def check_target_does_not_exist(self, target):
@@ -363,18 +410,131 @@ class NewCommand(DownloadProjectMixin, Command):
                 )
             )
 
+    # wizard UI
+    def _banner(self):
+        from .. import __version__
+
+        pyramid = []
+        for row in range(3):
+            pad = " " * (4 - row)
+            left = "▟" + "█" * row
+            right = "█" * row + "▙"
+            visible = len(pad) + len(left) + len(right)
+            pyramid.append(
+                pad
+                + paint(left, VIOLET_LIT)
+                + paint(right, VIOLET_DEEP)
+                + " " * (12 - visible)
+            )
+
+        print()
+        print(pyramid[0])
+        print(
+            pyramid[1]
+            + paint("Masonite", VIOLET, bold=True)
+            + paint(f"  v{__version__}", MUTED)
+        )
+        print(pyramid[2] + paint("The modern Python web framework", MUTED))
+        print()
+
+    def _title(self, message):
+        if self._interactive and supports_ansi():
+            print(paint(f"  {message}", bold=True))
+        else:
+            self.info(message)
+
+    def _done(self, message):
+        if self._interactive and supports_ansi():
+            print(f"  {paint('✓', VIOLET, bold=True)} {message}")
+        else:
+            self.line(f"  ✓ {message}")
+
+    def _working(self, message):
+        if self._interactive and supports_ansi():
+            print(paint(f"  … {message}", MUTED))
+        else:
+            self.line(f"  … {message}")
+
+    # wizard prompts (questionary with arrow keys, cleo as fallback)
+    def _questionary(self):
+        try:
+            import questionary
+
+            return questionary
+        except ImportError:  # pragma: no cover
+            return None
+
+    def _prompt_style(self, questionary):
+        return questionary.Style(
+            [
+                ("qmark", "fg:#6d4fe3 bold"),
+                ("question", "bold"),
+                ("answer", "fg:#9c82f2 bold"),
+                ("pointer", "fg:#6d4fe3 bold"),
+                ("highlighted", "fg:#6d4fe3 bold"),
+                ("selected", "fg:#6d4fe3"),
+                ("instruction", "fg:#5e626a"),
+            ]
+        )
+
+    def _prompt_text(self, message, default):
+        questionary = self._questionary()
+        if questionary is None:  # pragma: no cover
+            return self.ask(message, default)
+        answer = questionary.text(
+            message,
+            qmark="▲",
+            instruction=f"({default}) ",
+            style=self._prompt_style(questionary),
+        ).ask()
+        if answer is None:
+            raise WizardCancelled()
+        return answer.strip() or default
+
+    def _prompt_select(self, message, options):
+        """Display an arrow-key list. `options` is a list of (label, value)."""
+        questionary = self._questionary()
+        if questionary is None:  # pragma: no cover
+            labels = [label for label, _ in options]
+            answer = self.choice(message, labels, 0)
+            return dict(options).get(answer, options[0][1])
+        answer = questionary.select(
+            message,
+            choices=[
+                questionary.Choice(label, value=value) for label, value in options
+            ],
+            qmark="▲",
+            pointer="❯",
+            style=self._prompt_style(questionary),
+        ).ask()
+        if answer is None:
+            raise WizardCancelled()
+        return answer
+
+    def _prompt_confirm(self, message, default=True):
+        questionary = self._questionary()
+        if questionary is None:  # pragma: no cover
+            return self.confirm(message, default)
+        answer = questionary.confirm(
+            message, default=default, qmark="▲", style=self._prompt_style(questionary)
+        ).ask()
+        if answer is None:
+            raise WizardCancelled()
+        return answer
+
     # wizard questions
     def _resolve_stack(self, interactive):
         if self.option("api"):
             return True
         if not interactive:
             return False
-        answer = self.choice(
+        return self._prompt_select(
             "Which application stack do you want?",
-            ["Full-stack (server rendered views)", "API only"],
-            0,
+            [
+                ("Full-stack — server rendered views with Jinja2", False),
+                ("API only — JSON endpoints with JWT authentication", True),
+            ],
         )
-        return answer is not None and answer.startswith("API")
 
     def _resolve_preset(self, interactive, api):
         if api:
@@ -384,7 +544,16 @@ class NewCommand(DownloadProjectMixin, Command):
             return preset
         if not interactive:
             return "tailwind"
-        return self.choice("Which frontend preset do you want?", self.PRESETS, 0)
+        return self._prompt_select(
+            "Which frontend preset do you want?",
+            [
+                ("Tailwind CSS (default)", "tailwind"),
+                ("Bootstrap", "bootstrap"),
+                ("Vue 3", "vue"),
+                ("React", "react"),
+                ("None — skip the frontend scaffolding", "none"),
+            ],
+        )
 
     def _resolve_database(self, interactive):
         database = (self.option("db") or "").lower()
@@ -392,8 +561,13 @@ class NewCommand(DownloadProjectMixin, Command):
             return database
         if not interactive:
             return "sqlite"
-        return self.choice(
-            "Which database will your application use?", self.DATABASES, 0
+        return self._prompt_select(
+            "Which database will your application use?",
+            [
+                ("SQLite (default — zero configuration)", "sqlite"),
+                ("MySQL", "mysql"),
+                ("Postgres", "postgres"),
+            ],
         )
 
     def _resolve_bool(self, interactive, negative_flag, question, default):
@@ -401,7 +575,7 @@ class NewCommand(DownloadProjectMixin, Command):
             return False
         if not interactive:
             return default
-        return self.confirm(question, default)
+        return self._prompt_confirm(question, default)
 
     # crafting steps
     def _skeleton_directory(self):
@@ -507,7 +681,6 @@ class NewCommand(DownloadProjectMixin, Command):
         return os.path.join(to_dir, ".venv", "bin", "python")
 
     def _create_venv_and_install(self, to_dir):
-        self.info("✓ Creating virtual environment (.venv)")
         result = subprocess.run([sys.executable, "-m", "venv", ".venv"], cwd=to_dir)
         if result.returncode != 0:
             self.error(
@@ -517,7 +690,6 @@ class NewCommand(DownloadProjectMixin, Command):
             return None
 
         venv_python = self._venv_python(to_dir)
-        self.info("✓ Installing dependencies (this may take a minute)")
         result = subprocess.run(
             [
                 venv_python,
@@ -541,10 +713,11 @@ class NewCommand(DownloadProjectMixin, Command):
 
     def _apply_preset(self, to_dir, preset, venv_python):
         if venv_python and os.path.exists(venv_python):
-            self.info(f"✓ Scaffolding the {preset} frontend preset")
+            self._working(f"Scaffolding the {preset} frontend preset")
             subprocess.run(
                 [venv_python, "craft", "preset", preset], cwd=to_dir, check=False
             )
+            self._done(f"{preset} frontend preset scaffolded")
         else:
             self.comment(
                 f"Run `python craft preset {preset}` inside your project after installing "
@@ -589,24 +762,55 @@ class NewCommand(DownloadProjectMixin, Command):
                 "configure git user.name/user.email and commit manually."
             )
             return
-        self.info("✓ Git repository initialized")
+        self._done("Git repository initialized")
 
     def _print_next_steps(self, target, with_venv):
-        self.line("")
-        self.info("Your Masonite application is ready! Next steps:")
-        self.line("")
+        commands = []
         if target != ".":
-            self.line(f"    cd {target}")
+            commands.append(f"cd {target}")
         if with_venv:
-            if os.name == "nt":
-                self.line("    .venv\\Scripts\\activate")
-            else:
-                self.line("    source .venv/bin/activate")
-        self.line("    python craft migrate")
-        self.line("    python craft serve")
-        self.line("")
-        self.line("Documentation: https://docs.masonite.dev")
-        self.line("")
+            commands.append(
+                ".venv\\Scripts\\activate"
+                if os.name == "nt"
+                else "source .venv/bin/activate"
+            )
+        commands.append("python craft migrate")
+        commands.append("python craft serve")
+        docs = "Documentation: https://docs.masonite.dev"
+
+        fancy = (
+            self._interactive
+            and supports_ansi()
+            and "utf" in (sys.stdout.encoding or "").lower()
+        )
+        if not fancy:
+            self.line("")
+            self.info("Your Masonite application is ready! Next steps:")
+            self.line("")
+            for command in commands:
+                self.line(f"    {command}")
+            self.line("")
+            self.line(docs)
+            self.line("")
+            return
+
+        title = "Your application is ready!  Next steps:"
+        lines = [title, ""] + commands + ["", docs]
+        width = max(len(line) for line in lines) + 4
+
+        print()
+        print("  " + paint("╭" + "─" * width + "╮", VIOLET))
+        for index, line in enumerate(lines):
+            body = line.ljust(width - 4)
+            if index == 0:
+                body = paint(body, bold=True)
+            elif line == docs:
+                body = paint(body, MUTED)
+            elif line:
+                body = paint(body, VIOLET_LIT)
+            print("  " + paint("│", VIOLET) + "  " + body + "  " + paint("│", VIOLET))
+        print("  " + paint("╰" + "─" * width + "╯", VIOLET))
+        print()
 
     def _serve(self, to_dir, venv_python):
         executable = (
@@ -614,9 +818,17 @@ class NewCommand(DownloadProjectMixin, Command):
             if venv_python and os.path.exists(venv_python)
             else sys.executable
         )
-        self.info(
-            "Starting the development server at http://127.0.0.1:8000 (Ctrl+C to stop)"
-        )
+        self.line("")
+        if self._interactive and supports_ansi():
+            print(
+                f"  {paint('➜', VIOLET, bold=True)} Server running at "
+                + paint("http://127.0.0.1:8000", VIOLET_LIT, bold=True)
+                + paint("  (Ctrl+C to stop)", MUTED)
+            )
+        else:
+            self.info(
+                "Starting the development server at http://127.0.0.1:8000 (Ctrl+C to stop)"
+            )
         self.line("")
         try:
             subprocess.run([executable, "craft", "serve"], cwd=to_dir)

@@ -45,7 +45,7 @@ pip install masonite-framework
 masonite new blog
 ```
 
-The `masonite new` wizard guides you through creating your application — pick a stack (full-stack or API), a frontend preset, a database — then it creates a virtual environment, installs the dependencies, generates your application key, initializes a git repository and offers to start the development server right away.
+The `masonite new` wizard guides you through creating your application with arrow-key menus — pick a stack (full-stack or API), a frontend preset, a database — then it creates a virtual environment, installs the dependencies, generates your application key, initializes a git repository and offers to start the development server right away.
 
 Prefer no questions? Every step is also a flag:
 
