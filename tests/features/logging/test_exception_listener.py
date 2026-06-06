@@ -2,9 +2,20 @@ import responses
 
 from tests import TestCase
 from src.masonite.facades import Config, Log
+from src.masonite.logging.LoggerExceptionsListener import LoggerExceptionsListener
 
 
 class TestExceptionLoggingListener(TestCase):
+    def setUp(self):
+        super().setUp()
+        # make sure the listener registered by LoggingProvider is present even
+        # if a previous test cleared the global event registry
+        event = self.application.make("event")
+        if LoggerExceptionsListener not in event.get_events().get(
+            "masonite.exception.*", []
+        ):
+            event.listen("masonite.exception.*", [LoggerExceptionsListener])
+
     def test_exception_event_logs_type_message_and_traceback(self):
         try:
             raise ValueError("boom")

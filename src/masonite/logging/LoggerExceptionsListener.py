@@ -4,7 +4,13 @@ from ..facades import Log
 
 
 class LoggerExceptionsListener:
-    def handle(self, event: str, exception: Exception):
+    def handle(self, event: str, exception: Exception = None):
+        # the listener is bound to the "masonite.exception.*" wildcard so it
+        # should tolerate events fired without an exception payload
+        if exception is None:
+            Log.error(event)
+            return
+
         exception_type = exception.__class__.__name__
         message = f"{exception_type}: {exception}"
 

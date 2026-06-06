@@ -54,12 +54,17 @@ class TestEvent(TestCase):
     def setUp(self):
         super().setUp()
         self.event = self.application.make("event")
+        # save events registered by the application providers so they can be
+        # restored, instead of wiping them out for the rest of the test suite
+        self._original_events = {
+            event: list(listeners) for event, listeners in self.event.events.items()
+        }
         self.event.listen(UserAddedEvent, [SendEmailListener])
 
     def tearDown(self):
         super().tearDown()
-        # reset events listened to
-        self.event.events = {}
+        # reset events listened to the ones registered by the providers
+        self.event.events = self._original_events
 
     def test_events_registered(self):
         self.assertEqual(len(self.event.get_events().get(UserAddedEvent)), 1)

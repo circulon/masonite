@@ -56,5 +56,8 @@ class TestTimeUtils(TestCase):
         self.assertEqual(expiration_time_str, "Thu, 28 Jan 2021 07:28:00")
 
     def test_migration_timestamp(self):
-        self.fakeTime(pendulum.datetime(2021, 10, 25, 8, 12, 54))
+        # migration_timestamp() renders "now" in the local timezone, so freeze
+        # time with a local datetime to be machine independent (pendulum 3
+        # freezes the instant, not the rendered value)
+        self.fakeTime(pendulum.datetime(2021, 10, 25, 8, 12, 54, tz="local"))
         self.assertEqual(migration_timestamp(), "2021_10_25_081254")
