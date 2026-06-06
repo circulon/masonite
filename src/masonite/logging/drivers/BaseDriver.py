@@ -25,6 +25,9 @@ class BaseDriver:
     def get_format(self):
         return self.options.get("format", self.logger.get_default_format())
 
+    def get_propagate(self):
+        return self.options.get("propagate", self.logger.get_default_propagate())
+
     def should_send(self, level):
         return self.get_min_level() <= self.levels.get(level)
 
@@ -44,6 +47,9 @@ class BaseDriver:
             self.logging_logger.removeHandler(handler)
         self.logging_logger.addHandler(self.logging_handler)
         self.logging_logger.setLevel(self.get_min_level())
+        # avoid messages being duplicated by ancestor/root loggers unless
+        # the channel explicitly opts in with the 'propagate' option
+        self.logging_logger.propagate = self.get_propagate()
 
     def send(self, level, message):
         raise NotImplementedError()

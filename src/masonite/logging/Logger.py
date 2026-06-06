@@ -58,6 +58,9 @@ class Logger:
     def get_default_date_format(self) -> str:
         return self.options.get("channels.default.date_format")
 
+    def get_default_propagate(self) -> bool:
+        return self.options.get("channels.default.propagate", False)
+
     def add_driver(self, name: str, driver):
         self.drivers.update({name: driver})
 

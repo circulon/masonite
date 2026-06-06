@@ -1,3 +1,4 @@
+import logging
 import pendulum
 import tempfile
 
@@ -18,7 +19,8 @@ class TestLogger(TestCase):
     def tearDown(self):
         super().tearDown()
         self.restoreTime()
-        Config.set("logging.channels.single.path", self.log_file)
+        Config.set("logging.channels.single.path", self.log_file_path)
+        self.log_file.close()
 
     def test_terminal_logging(self):
         Log.error("message")
@@ -69,3 +71,17 @@ class TestLogger(TestCase):
             self.log_file.readline(),
             "Some message\n",
         )
+
+    def test_propagate_defaults_to_false(self):
+        Log.channel("single").warning("a message")
+        self.assertFalse(logging.getLogger("single").propagate)
+
+    def test_propagate_can_be_enabled_per_channel(self):
+        Config.set("logging.channels.single.propagate", True)
+        try:
+            Log.channel("single").warning("a message")
+            self.assertTrue(logging.getLogger("single").propagate)
+        finally:
+            Config.set("logging.channels.single.propagate", False)
+            Log.channel("single").warning("another message")
+            self.assertFalse(logging.getLogger("single").propagate)

@@ -5,6 +5,9 @@ CHANNELS = {
         "timezone": "UTC",
         "format": "{timestamp} - {levelname}: {message}",
         "date_format": "YYYY-MM-DD HH:mm:ss",
+        # propagate messages to ancestor (root) Python loggers. Can be
+        # overriden per channel. Disabled by default to avoid duplicates.
+        "propagate": False,
     },
     "console": {
         "driver": "terminal",

@@ -226,7 +226,7 @@ class date(BaseValidation):
         try:
             date = pendulum.parse(attribute)
             return date
-        except pendulum.parsing.exceptions.ParserError:
+        except ValueError:
             return False
 
     def message(self, attribute):
@@ -248,7 +248,7 @@ class before_today(BaseValidation):
 
         try:
             return pendulum.parse(attribute, tz=self.tz) <= pendulum.yesterday()
-        except pendulum.parsing.exceptions.ParserError:
+        except ValueError:
             return False
 
     def message(self, attribute):
@@ -270,7 +270,7 @@ class after_today(BaseValidation):
 
         try:
             return pendulum.parse(attribute, tz=self.tz) >= pendulum.yesterday()
-        except pendulum.parsing.exceptions.ParserError:
+        except ValueError:
             return False
 
     def message(self, attribute):
@@ -292,7 +292,7 @@ class is_past(BaseValidation):
 
         try:
             return pendulum.parse(attribute, tz=self.tz).is_past()
-        except pendulum.parsing.exceptions.ParserError:
+        except ValueError:
             return False
 
     def message(self, attribute):
@@ -314,7 +314,7 @@ class is_future(BaseValidation):
 
         try:
             return pendulum.parse(attribute, tz=self.tz).is_future()
-        except pendulum.parsing.exceptions.ParserError:
+        except ValueError:
             return False
 
     def message(self, attribute):

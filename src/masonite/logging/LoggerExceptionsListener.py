@@ -1,6 +1,20 @@
+import traceback
+
 from ..facades import Log
 
 
 class LoggerExceptionsListener:
-    def handle(self, exception_type: str, exception: Exception):
-        Log.error(f"{exception_type}: {exception}")
+    def handle(self, event: str, exception: Exception):
+        exception_type = exception.__class__.__name__
+        message = f"{exception_type}: {exception}"
+
+        # log the full traceback so exceptions carry enough information
+        if exception.__traceback__ is not None:
+            stack = "".join(
+                traceback.format_exception(
+                    type(exception), exception, exception.__traceback__
+                )
+            )
+            message = f"{message}\n{stack}"
+
+        Log.error(message)
