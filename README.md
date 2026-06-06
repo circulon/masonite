@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/4trhpkkdbbzutc5ufxi9.png" width="160px">
+  <img src="https://raw.githubusercontent.com/masonitedev/masonite/5.0/.github/logo/masonite-mark.svg" width="160px">
   <h1 align="center">Masonite</h1>
 </p>
 <p align="center">
@@ -84,6 +84,14 @@ Contributing to Masonite is simple:
 - [Samuel Girardin](https://github.com/girardinsamuel)
 - [Marlysson Silva](https://github.com/Marlysson)
 - [Eduardo Aguad](https://github.com/eaguad1337)
+
+## Logo
+
+With the move to masonite.dev, Masonite adopted a new brand: the Great Pyramid mark. The original logo from Joe's era remains part of the project's history.
+
+| Legacy (2017–2025) | New (2026–) |
+|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/masonitedev/masonite/5.0/.github/logo/masonite-logo-legacy.png" width="120" alt="Legacy Masonite logo"> | <img src="https://raw.githubusercontent.com/masonitedev/masonite/5.0/.github/logo/masonite-mark.svg" width="120" alt="New Masonite logo — the Great Pyramid mark"> |
 
 ## Security Vulnerabilities
 
