@@ -73,6 +73,7 @@ argon2 = ["argon2-cffi>=23,<26"]
 dev = ["flake8", "black", "isort"]
 
 [project.scripts]
+masonite = "masonite.commands.Entry:application.run"
 project = "masonite.commands.Entry:application.run"
 
 [tool.setuptools]
@@ -83,3 +84,7 @@ version = { attr = "masonite.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+exclude = ["masonite.skeleton*"]
+
+[tool.setuptools.package-data]
+masonite = ["skeleton/**/*", "skeleton/**/.*", "skeleton/.*"]

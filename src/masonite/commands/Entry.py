@@ -8,14 +8,14 @@ successfully import commands for you.
 from cleo import Application
 
 from .. import __version__
-from .ProjectCommand import (
-    ProjectCommand,
-)
-from .KeyCommand import KeyCommand
 from .InstallCommand import InstallCommand
+from .KeyCommand import KeyCommand
+from .NewCommand import NewCommand
+from .ProjectCommand import ProjectCommand
 
-application = Application("Masonite Starter", __version__)
+application = Application("Masonite", __version__)
 
+application.add(NewCommand())
 application.add(ProjectCommand())
 application.add(KeyCommand())
 application.add(InstallCommand())

@@ -28,3 +28,8 @@ include src/masonite/templates/*
 include src/masonite/templates/assets/*
 include src/masonite/api/stubs/*
 include src/masonite/api/stubs/routes/*
+recursive-include src/masonite/skeleton *
+include src/masonite/skeleton/.env-example
+include src/masonite/skeleton/.env.testing
+include src/masonite/skeleton/.gitignore
+recursive-include src/masonite/skeleton .gitkeep

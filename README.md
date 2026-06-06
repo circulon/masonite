@@ -38,13 +38,22 @@ If you find any discrepencies or anything that doesn't make sense, please open a
 
 ## Getting Started Quickly
 
-Create and activate a virtual environment and if you have a working Python 3.10–3.13 installation then getting started is as quick as typing
+If you have a working Python 3.10–3.13 installation then getting started is as quick as typing
 
 ```bash
 pip install masonite-framework
-project start .
-python craft serve
+masonite new blog
 ```
+
+The `masonite new` wizard guides you through creating your application — pick a stack (full-stack or API), a frontend preset, a database — then it creates a virtual environment, installs the dependencies, generates your application key, initializes a git repository and offers to start the development server right away.
+
+Prefer no questions? Every step is also a flag:
+
+```bash
+masonite new blog --api --db=postgres --no-input
+```
+
+> `project start` keeps working as an alias of `masonite new` for existing tutorials and docs.
 
 ## Upgrading from 4.x (legacy) to 5.x
 
