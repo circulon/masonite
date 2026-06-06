@@ -12,3 +12,7 @@ src/*.egg-info/
 .vscode
 build/
 venv4
+*.sqlite3
+dist/
+logs/
+.venv*/
