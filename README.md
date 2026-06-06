@@ -30,7 +30,7 @@ If you find any discrepencies or anything that doesn't make sense, please open a
 
 ## Getting Started Quickly
 
-Create and activate a virtual environment and if you have a working Python <= 3.11 installation then getting started is as quick as typing
+Create and activate a virtual environment and if you have a working Python 3.10–3.13 installation then getting started is as quick as typing
 
 ```bash
 pip install masonite-framework
@@ -38,11 +38,28 @@ project start .
 python craft serve
 ```
 
+## Upgrading from 4.x to 5.0
+
+Masonite has moved to the [masonitedev](https://github.com/masonitedev) organization and the PyPI package has been renamed from `masonite` to `masonite-framework`.
+
+1. Uninstall the old package and install the new one:
+
+   ```bash
+   pip uninstall masonite
+   pip install "masonite-framework>=5,<6"
+   ```
+
+2. Imports are unchanged — you still `import masonite` / `from masonite import ...`.
+3. Python 3.10–3.13 is now required (3.8/3.9 were dropped as they reached end of life).
+4. Masonite ORM 3.x and Pendulum 3.x are now required. If your app parses dates directly with Pendulum, review the [Pendulum 3 changes](https://pendulum.eustace.io/blog/announcing-pendulum-3-0-0.html) (parsing is stricter).
+5. New in 5.0: a full logging system with `terminal`, `single`, `daily`, `stack`, `syslog` and `slack` drivers, configured in `config/logging.py` and available through the `Log` facade. Unhandled exceptions are logged automatically with their traceback.
+6. The repository now lives at https://github.com/masonitedev/masonite — update your remotes, issues and links.
+
 ## Contributing
 
 Contributing to Masonite is simple:
 
-- Read the [Contributing Guide](https://github.com/masonitedev/masonite/blob/4.0/CONTRIBUTING.md) to learn how to contribute to the core source code development of the project.
+- Read the [Contributing Guide](https://github.com/masonitedev/masonite/blob/5.0/CONTRIBUTING.md) to learn how to contribute to the core source code development of the project.
 - Open an [issue](https://github.com/masonitedev/masonite/issues) or a [pull request](https://github.com/masonitedev/masonite/pulls) to ask questions, report bugs or propose changes.
 
 ## Core Maintainers
