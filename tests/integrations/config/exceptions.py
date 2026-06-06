@@ -14,7 +14,7 @@ HANDLERS = {
     "solutions": {"stackoverflow": False, "possible_solutions": True},
     "recommendations": {
         "packages_updates": {
-            "list": ["exceptionite", "masonite-framework", "masoniteorm", "pytest"]
+            "list": ["exceptionite", "masonite-framework", "masonite-framework-orm", "pytest"]
         }
     },
 }
