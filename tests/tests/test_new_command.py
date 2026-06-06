@@ -132,6 +132,25 @@ class TestNewCommand(TestCase):
         assert os.path.isfile(os.path.join(project, "wsgi.py"))
         assert os.path.isfile(os.path.join(project, "templates", "welcome.html"))
 
+    def test_no_pycache_is_copied(self):
+        # pip byte-compiles the installed skeleton: __pycache__ folders must
+        # never end up in a freshly crafted project
+        import src.masonite.commands.NewCommand as new_command_module
+
+        skeleton = os.path.join(
+            os.path.dirname(new_command_module.__file__), "..", "skeleton"
+        )
+        os.makedirs(os.path.join(skeleton, "config", "__pycache__"), exist_ok=True)
+        try:
+            project = self.project_path()
+            self.craft("new", f"{project} {NO_WIZARD}").assertSuccess()
+            for root, dirs, _ in os.walk(project):
+                assert "__pycache__" not in dirs, f"__pycache__ found in {root}"
+        finally:
+            shutil.rmtree(
+                os.path.join(skeleton, "config", "__pycache__"), ignore_errors=True
+            )
+
     def test_welcome_template_links_to_new_docs(self):
         project = self.project_path()
         self.craft("new", f"{project} {NO_WIZARD}").assertSuccess()

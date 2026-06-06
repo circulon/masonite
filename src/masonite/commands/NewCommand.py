@@ -410,17 +410,23 @@ class NewCommand(DownloadProjectMixin, Command):
     def _copy_skeleton(self, target, to_dir):
         skeleton = self._skeleton_directory()
         force = bool(self.option("force"))
+        # the installed skeleton .py files may have been byte-compiled by pip
+        ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
 
         if target == ".":
             for entry in os.listdir(skeleton):
+                if entry == "__pycache__":
+                    continue
                 source = os.path.join(skeleton, entry)
                 destination = os.path.join(to_dir, entry)
                 if os.path.isdir(source):
-                    shutil.copytree(source, destination, dirs_exist_ok=force)
+                    shutil.copytree(
+                        source, destination, dirs_exist_ok=force, ignore=ignore
+                    )
                 else:
                     shutil.copy2(source, destination)
         else:
-            shutil.copytree(skeleton, to_dir, dirs_exist_ok=force)
+            shutil.copytree(skeleton, to_dir, dirs_exist_ok=force, ignore=ignore)
 
         # ensure the craft entry point is executable
         craft_path = os.path.join(to_dir, "craft")
