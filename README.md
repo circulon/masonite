@@ -10,6 +10,14 @@
   <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
+## In Memory of Joseph Mancuso
+
+Masonite was created by [Joseph "Joe" Mancuso](https://github.com/josephmancuso), who sadly passed away in November 2025.
+
+Joe built Masonite from the ground up and poured years of work, care and enthusiasm into the framework and its community. Everything you see here exists because of him. We will continue developing and maintaining this project in his memory, keeping alive the developer-first spirit he gave it.
+
+Thank you for everything, Joe. ❤️
+
 ## About Masonite
 
 Stop using old frameworks with just a few confusing features. Masonite is the developer focused dev tool with all the features you need for the rapid development you deserve. Masonite is perfect for beginners getting their first web app deployed or advanced developers and businesses that need to reach for the full fleet of features available. A short list of the available features are:
@@ -38,22 +46,29 @@ project start .
 python craft serve
 ```
 
-## Upgrading from 4.x to 5.0
+## Upgrading from 4.x (legacy) to 5.x
 
 Masonite has moved to the [masonitedev](https://github.com/masonitedev) organization and the PyPI package has been renamed from `masonite` to `masonite-framework`.
 
-1. Uninstall the old package and install the new one:
+> [!IMPORTANT]
+> The legacy `MasoniteFramework/masonite` repository and the old `masonite` PyPI package (4.x and earlier) are **deprecated and will no longer receive updates or security fixes**. All development continues here. If you are running Masonite 4.x you should upgrade to 5.x from this repository.
+
+1. Uninstall the legacy package and install the new one:
 
    ```bash
    pip uninstall masonite
    pip install "masonite-framework>=5,<6"
    ```
 
-2. Imports are unchanged — you still `import masonite` / `from masonite import ...`.
+2. Imports are unchanged — you still `import masonite` / `from masonite import ...`. The `project` and `craft` commands work the same way.
 3. Python 3.10–3.13 is now required (3.8/3.9 were dropped as they reached end of life).
-4. Masonite ORM 3.x and Pendulum 3.x are now required. If your app parses dates directly with Pendulum, review the [Pendulum 3 changes](https://pendulum.eustace.io/blog/announcing-pendulum-3-0-0.html) (parsing is stricter).
+4. Masonite ORM 3.x and Pendulum 3.x are now required. If your app parses dates directly with Pendulum, review the [Pendulum 3 changes](https://pendulum.eustace.io/blog/announcing-pendulum-3-0-0.html) (parsing is stricter). If you use `pendulum.set_test_now()` in your tests, replace it with `pendulum.travel_to()` or use the built-in `self.fakeTime()` helper.
 5. New in 5.0: a full logging system with `terminal`, `single`, `daily`, `stack`, `syslog` and `slack` drivers, configured in `config/logging.py` and available through the `Log` facade. Unhandled exceptions are logged automatically with their traceback.
-6. The repository now lives at https://github.com/masonitedev/masonite — update your remotes, issues and links.
+6. The repository now lives at https://github.com/masonitedev/masonite — update your git remotes, issues and links:
+
+   ```bash
+   git remote set-url origin https://github.com/masonitedev/masonite.git
+   ```
 
 ## Contributing
 
@@ -64,9 +79,10 @@ Contributing to Masonite is simple:
 
 ## Core Maintainers
 
-- [Joseph Mancuso](https://github.com/josephmancuso) (Author)
+- [Joseph Mancuso](https://github.com/josephmancuso) (Creator — in memoriam)
 - [Samuel Girardin](https://github.com/girardinsamuel)
 - [Marlysson Silva](https://github.com/Marlysson)
+- [Eduardo Aguad](https://github.com/eaguad1337)
 
 ## Security Vulnerabilities
 
