@@ -32,7 +32,7 @@ Stop using old frameworks with just a few confusing features. Masonite is the de
 
 ## Learning Masonite
 
-New to Masonite? Check out the [official repository](https://github.com/masonitedev/masonite).
+New to Masonite? Read the [Official Documentation](https://docs.masonite.dev).
 Masonite strives to have extremely clear documentation 😃. It would be wise to go through the tutorials there.
 If you find any discrepencies or anything that doesn't make sense, please open an issue and we will get it cleared up!
 
@@ -63,8 +63,9 @@ Masonite has moved to the [masonitedev](https://github.com/masonitedev) organiza
 2. Imports are unchanged — you still `import masonite` / `from masonite import ...`. The `project` and `craft` commands work the same way.
 3. Python 3.10–3.13 is now required (3.8/3.9 were dropped as they reached end of life).
 4. Masonite ORM 3.x and Pendulum 3.x are now required. If your app parses dates directly with Pendulum, review the [Pendulum 3 changes](https://pendulum.eustace.io/blog/announcing-pendulum-3-0-0.html) (parsing is stricter). If you use `pendulum.set_test_now()` in your tests, replace it with `pendulum.travel_to()` or use the built-in `self.fakeTime()` helper.
-5. New in 5.0: a full logging system with `terminal`, `single`, `daily`, `stack`, `syslog` and `slack` drivers, configured in `config/logging.py` and available through the `Log` facade. Unhandled exceptions are logged automatically with their traceback.
-6. The repository now lives at https://github.com/masonitedev/masonite — update your git remotes, issues and links:
+5. Masonite ORM is now published as [`masoniteorm`](https://pypi.org/project/masoniteorm/) (replacing `masonite-orm`). It is installed automatically, but update your own requirement pins if you declare it directly — imports are unchanged.
+6. New in 5.0: a full logging system with `terminal`, `single`, `daily`, `stack`, `syslog` and `slack` drivers, configured in `config/logging.py` and available through the `Log` facade. Unhandled exceptions are logged automatically with their traceback. See the [Logging documentation](https://docs.masonite.dev/features/logging).
+7. The repository now lives at https://github.com/masonitedev/masonite and the documentation at https://docs.masonite.dev — update your git remotes, issues and links:
 
    ```bash
    git remote set-url origin https://github.com/masonitedev/masonite.git

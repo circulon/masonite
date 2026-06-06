@@ -2,7 +2,7 @@ OPTIONS = {
     "editor": "vscode",
     "search_url": "https://www.google.com/search?q=",
     "links": {
-        "doc": "https://github.com/masonitedev/masonite",
+        "doc": "https://docs.masonite.dev",
         "repo": "https://github.com/masonitedev/masonite",
     },
     "stack": {"offset": 10, "shorten": True},
@@ -14,7 +14,7 @@ HANDLERS = {
     "solutions": {"stackoverflow": False, "possible_solutions": True},
     "recommendations": {
         "packages_updates": {
-            "list": ["exceptionite", "masonite", "masonite-orm", "pytest"]
+            "list": ["exceptionite", "masonite-framework", "masoniteorm", "pytest"]
         }
     },
 }

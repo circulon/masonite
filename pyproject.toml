@@ -22,7 +22,7 @@ dependencies = [
     "bcrypt>=4,<6",
     "whitenoise>=6.6,<7",
     "python-dotenv>=1,<2",
-    "masonite-orm>=3,<4",
+    "masoniteorm>=3.0.1,<4",
     "hashids>=1.3,<2",
     "cryptography>=42,<46",
     "tldextract>=5,<6",
@@ -51,7 +51,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/masonitedev/masonite"
-Documentation = "https://github.com/masonitedev/masonite"
+Documentation = "https://docs.masonite.dev"
 Source = "https://github.com/masonitedev/masonite"
 
 [project.optional-dependencies]
