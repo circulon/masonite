@@ -65,19 +65,14 @@ class TestHTTPClient(unittest.TestCase):
             response.headers = {}
             return response
 
-        with patch(
-            "src.masonite.http.HTTPClient.requests.request", side_effect=side_effect
-        ):
+        with patch("requests.request", side_effect=side_effect):
             response = self.http.retry(3, sleep=0).get("https://example.test")
 
         self.assertEqual(attempts["count"], 3)
         self.assertEqual(response.json(), {"ok": True})
 
     def test_retry_reraises_when_exhausted(self):
-        with patch(
-            "src.masonite.http.HTTPClient.requests.request",
-            side_effect=requests.ConnectionError("boom"),
-        ):
+        with patch("requests.request", side_effect=requests.ConnectionError("boom")):
             with self.assertRaises(requests.ConnectionError):
                 self.http.retry(2, sleep=0).get("https://example.test")
 
