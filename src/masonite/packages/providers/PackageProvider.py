@@ -1,4 +1,5 @@
 import os
+import importlib.util
 from collections import defaultdict
 from os.path import relpath, join, basename, isdir, isfile, dirname
 import shutil
@@ -64,18 +65,40 @@ class PackageProvider(Provider):
         It works when installing the package locally with: pip install . or pip install -e .
         and when installing the package from production release with: pip install package-name
         """
-        # load module provider
-        provider_module = load(self.__module__)
         # get relative module path to package root
         relative_module_path = modularize(relative_dir)
         self.package.module_root = self.__module__[
             0 : self.__module__.find(relative_module_path) + len(relative_module_path)
         ]
-        module_root_path = as_filepath(self.package.module_root)
-        self.package.abs_root = provider_module.__file__[
-            0 : provider_module.__file__.find(module_root_path) + len(module_root_path)
-        ]
+        # Resolve the package's absolute directory through the import system
+        # rather than a first-occurrence substring match on the provider's
+        # __file__. A substring search breaks when the *project* path itself
+        # contains the package name before the real module directory — e.g. an
+        # app created at /tmp/collapsar-smoke, or an editable install from a
+        # repo dir named like the package — because find() matches too early
+        # and points abs_root at a truncated, nonexistent directory. See #24.
+        self.package.abs_root = self._resolve_package_root(self.package.module_root)
         return self
+
+    def _resolve_package_root(self, module_root):
+        """Return the absolute directory of an importable package.
+
+        Uses ``importlib`` so the lookup is immune to a project path that
+        happens to contain the package name. Falls back to the legacy
+        substring resolution only if the import system has no spec for the
+        package (exotic loaders).
+        """
+        spec = importlib.util.find_spec(module_root)
+        if spec is not None and spec.submodule_search_locations:
+            return list(spec.submodule_search_locations)[0]
+        if spec is not None and spec.origin:
+            return dirname(spec.origin)
+        # Legacy fallback: derive the root from the provider file path.
+        module_root_path = as_filepath(module_root)
+        provider_file = load(self.__module__).__file__
+        return provider_file[
+            0 : provider_file.find(module_root_path) + len(module_root_path)
+        ]
 
     def name(self, name):
         if name in PACKAGE_RESERVED_NAMES:
