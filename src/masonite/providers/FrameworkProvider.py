@@ -7,6 +7,7 @@ from ..configuration import config
 from ..presets.PresetsCapsule import PresetsCapsule
 from ..presets import Tailwind, Vue, React, Bootstrap
 from ..cors import Cors
+from ..http import HTTPClient
 
 
 class FrameworkProvider(Provider):
@@ -37,6 +38,8 @@ class FrameworkProvider(Provider):
             }
         cors = Cors(self.application).set_options(options)
         self.application.bind("cors", cors)
+
+        self.application.bind("http", HTTPClient())
 
     def boot(self):
         from ..response import Response
