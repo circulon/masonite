@@ -1,3 +1,33 @@
+import os
+import sys
+
+# Masonite brand colors (see .github/logo/masonite-mark.svg)
+VIOLET = (109, 79, 227)  # #6d4fe3 — interactive
+VIOLET_LIT = (156, 130, 242)  # #9c82f2 — lit face
+VIOLET_DEEP = (74, 51, 166)  # #4a33a6 — deep face
+MUTED = (94, 98, 106)  # #5e626a
+
+
+def supports_ansi():
+    return (
+        sys.stdout.isatty()
+        and os.environ.get("NO_COLOR") is None
+        and os.environ.get("TERM", "") != "dumb"
+    )
+
+
+def paint(text, rgb=None, bold=False):
+    """Color a string with truecolor ANSI codes when the terminal supports it."""
+    if not supports_ansi() or (rgb is None and not bold):
+        return text
+    prefix = ""
+    if rgb is not None:
+        prefix += "\x1b[38;2;{0};{1};{2}m".format(*rgb)
+    if bold:
+        prefix += "\x1b[1m"
+    return f"{prefix}{text}\x1b[0m"
+
+
 class HasColoredOutput:
     """Add level-colored output print functions to a class."""
 

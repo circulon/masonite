@@ -1,6 +1,72 @@
-from werkzeug.serving import run_simple
+import logging
+import os
+import shutil
+import sys
+from datetime import datetime
 
+from werkzeug.serving import WSGIRequestHandler, run_simple
+
+from ..utils.console import MUTED, VIOLET, VIOLET_LIT, paint, supports_ansi
 from .Command import Command
+
+
+class QuietWerkzeugFilter(logging.Filter):
+    """Replace werkzeug's startup noise (development server warning, addresses,
+    reloader chatter) with the styled banner printed by ServeCommand. Errors
+    are always kept, and file-change reloads are restyled as a single line."""
+
+    def filter(self, record):
+        if record.levelno >= logging.ERROR:
+            return True
+
+        message = record.getMessage()
+        if "Detected change" in message:
+            detail = message.strip().lstrip("* ")
+            if supports_ansi():
+                print(f"  {paint('↻', VIOLET, bold=True)} {paint(detail, MUTED)}")
+            else:
+                print(f"  {detail}")
+        return False
+
+
+class StyledRequestHandler(WSGIRequestHandler):
+    """Log requests Laravel-style: time, method and path with the status
+    dotted out to the right edge of the terminal."""
+
+    def log_request(self, code="-", size="-"):
+        try:
+            path = self.path
+            method = self.command
+        except AttributeError:
+            path = self.requestline
+            method = ""
+
+        now = datetime.now().strftime("%H:%M:%S")
+        status = str(code)
+
+        if not supports_ansi():
+            print(f"  [{now}] {method} {path} {status}")
+            return
+
+        try:
+            status_class = int(status) // 100
+        except ValueError:
+            status_class = 0
+        status_colors = {2: VIOLET_LIT, 3: MUTED, 4: (227, 179, 65), 5: (227, 79, 79)}
+        status_rgb = status_colors.get(status_class)
+
+        left = f"  {now}  {method.ljust(7)} {path} "
+        right = f" {status}"
+        columns = shutil.get_terminal_size().columns
+        dots = "." * max(columns - len(left) - len(right) - 2, 3)
+
+        print(
+            paint(f"  {now}", MUTED)
+            + f"  {paint(method.ljust(7), bold=True)} {path} "
+            + paint(dots, MUTED)
+            + " "
+            + paint(status, status_rgb, bold=True)
+        )
 
 
 class ServeCommand(Command):
@@ -50,24 +116,52 @@ class ServeCommand(Command):
             )
             return
 
-        use_reloader = True
-        threaded = False
+        host = self.option("host")
+        port = int(self.option("port"))
+        use_reloader = not self.option("dont-reload")
+        threaded = bool(self.option("threaded"))
         extra_files = [".env", self.app.get_storage_path()]
 
-        if self.option("dont-reload"):
-            use_reloader = False
+        logging.getLogger("werkzeug").addFilter(QuietWerkzeugFilter())
 
-        if self.option("threaded"):
-            threaded = True
+        # with the reloader enabled werkzeug re-runs this command in a child
+        # process (WERKZEUG_RUN_MAIN=true): only print the banner once
+        if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+            self._banner(host, port, use_reloader)
 
         run_simple(
-            self.option("host"),
-            int(self.option("port")),
+            host,
+            port,
             self.app,
             threaded=threaded,
             use_reloader=use_reloader,
             extra_files=extra_files,
-            # reloader_interval=
+            request_handler=StyledRequestHandler,
             # more efficient than stat
             reloader_type="watchdog",
         )
+
+    def _banner(self, host, port, use_reloader):
+        from .. import __version__
+
+        url = f"http://{host}:{port}"
+        reload_note = (
+            "auto-reload on file changes" if use_reloader else "auto-reload disabled"
+        )
+
+        if not (supports_ansi() and "utf" in (sys.stdout.encoding or "").lower()):
+            self.info(f"Masonite v{__version__} development server")
+            self.info(f"Server running at {url} ({reload_note}, Ctrl+C to stop)")
+            self.line("")
+            return
+
+        print()
+        print(
+            f"  {paint('➜', VIOLET, bold=True)} "
+            + paint("Masonite", VIOLET, bold=True)
+            + paint(f" v{__version__}", MUTED)
+            + "  Server running at "
+            + paint(url, VIOLET_LIT, bold=True)
+        )
+        print(paint(f"    {reload_note} — press Ctrl+C to stop", MUTED))
+        print()
