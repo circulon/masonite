@@ -4,7 +4,9 @@ DATABASES = {
     "default": "sqlite",
     "sqlite": {
         "driver": "sqlite",
-        "database": "database.sqlite3",
+        # Built fresh from migrations + seeds at the start of each test session
+        # (see tests/conftest.py); never committed.
+        "database": "tests/integrations/databases/database.sqlite3",
     },
 }
 

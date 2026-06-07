@@ -15,3 +15,7 @@ venv4
 dist/
 logs/
 .venv*/
+
+# Test database is generated from migrations + seeds (tests/conftest.py)
+tests/integrations/databases/*.sqlite3
+/database.sqlite3

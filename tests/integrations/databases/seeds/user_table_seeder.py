@@ -9,9 +9,10 @@ class UserTableSeeder(Seeder):
         """Run the database seeds."""
         User.create(
             {
-                "name": "idmann509",
+                "name": "Joe",
                 "email": "idmann509@gmail.com",
-                "password": "secret",
+                # bcrypt hash of "secret" so auth attempts in tests succeed
+                "password": "$2b$12$BKR8wrzDwn0xmRX/j45FK.OdLD3W09mqIsAIIqefGv88T.vfuKdui",
                 "phone": "+123456789",
             }
         )
