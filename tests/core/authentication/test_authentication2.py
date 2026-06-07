@@ -1,5 +1,7 @@
 from tests import TestCase
 
+from src.masonite.authentication import Auth
+
 
 class TestAuthentication(TestCase):
     def setUp(self):
@@ -40,3 +42,10 @@ class TestAuthentication(TestCase):
         self.application.make("auth").guard("web").attempt_by_id(1, once=True)
 
         self.assertIsNone(self.application.make("request").cookie("token"))
+
+    def test_logout_route_uses_post(self):
+        routes = {route.get_name(): route for route in Auth.routes()}
+
+        self.assertIn("logout", routes)
+        self.assertIn("post", routes["logout"].request_method)
+        self.assertNotIn("get", routes["logout"].request_method)
