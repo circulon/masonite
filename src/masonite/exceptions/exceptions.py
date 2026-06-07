@@ -216,3 +216,19 @@ class InvalidPackageName(Exception):
 
 class LoaderNotFound(Exception):
     pass
+
+
+class ValidationException(Exception):
+    """Raised when a FormRequest fails validation.
+
+    Carries the validation MessageBag and is turned into a response by the
+    ValidationExceptionHandler: a redirect back with the errors flashed to the
+    session for a standard request, or a ``422`` JSON payload for a request
+    that accepts JSON.
+    """
+
+    def __init__(self, errors, message="The given data was invalid.", status=422):
+        super().__init__(message)
+        self.errors = errors
+        self.message = message
+        self.status = status

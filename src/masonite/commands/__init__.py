@@ -9,6 +9,7 @@ from .QueueTableCommand import QueueTableCommand
 from .QueueFailedCommand import QueueFailedCommand
 from .MakeControllerCommand import MakeControllerCommand
 from .MakeJobCommand import MakeJobCommand
+from .MakeRequestCommand import MakeRequestCommand
 from .MakeMailableCommand import MakeMailableCommand
 from .MakeProviderCommand import MakeProviderCommand
 from .PublishPackageCommand import PublishPackageCommand

@@ -65,6 +65,7 @@ class Kernel:
         # set locations
         self.application.bind("controllers.location", "tests/integrations/controllers")
         self.application.bind("jobs.location", "tests/integrations/jobs")
+        self.application.bind("requests.location", "tests/integrations/requests")
         self.application.bind("mailables.location", "tests/integrations/mailables")
         self.application.bind("providers.location", "tests/integrations/providers")
         self.application.bind("listeners.location", "tests/integrations/listeners")
