@@ -45,3 +45,28 @@ class TestCommandsAssertions(TestCase):
 
     def test_assert_success(self):
         self.craft("fake_test_command").assertSuccess()
+
+
+class TestCommandCapsuleEnabled(TestCase):
+    def make_capsule(self, enabled):
+        return CommandCapsule(
+            CommandApplication("Masonite Version:", "tests"), enabled=enabled
+        )
+
+    def test_enabled_by_default(self):
+        capsule = CommandCapsule(CommandApplication("Masonite Version:", "tests"))
+        capsule.add(FakeTestCommand())
+        self.assertIn("fake_test_command", capsule.command_name)
+
+    def test_disabled_capsule_ignores_add(self):
+        capsule = self.make_capsule(enabled=False)
+        result = capsule.add(FakeTestCommand())
+
+        self.assertIs(result, capsule)
+        self.assertEqual(capsule.command_name, [])
+
+    def test_disabled_capsule_ignores_swap(self):
+        capsule = self.make_capsule(enabled=False)
+        capsule.swap(FakeTestCommand())
+
+        self.assertEqual(capsule.command_name, [])

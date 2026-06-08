@@ -14,11 +14,15 @@ ResponseHandler = Callable[[str, List[Tuple]], None]
 
 
 class Application(Container):
-    def __init__(self, base_path: str = None):
+    def __init__(self, base_path: str = None, commands_enabled: bool = True):
         self.base_path: str = base_path
         self.storage_path: str = None
         self.response_handler: ResponseHandler
         self.providers: list = []
+        # When False, the command registry accepts no commands. Providers can
+        # still attempt to register them during boot, but they are dropped —
+        # useful for WSGI processes that never run the CLI.
+        self.commands_enabled: bool = commands_enabled
 
     def set_response_handler(self, response_handler: ResponseHandler) -> None:
         self.response_handler = response_handler

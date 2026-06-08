@@ -6,7 +6,7 @@ import unittest
 from src.masonite.foundation import Application, CoreKernel, Kernel
 
 
-def fresh_app():
+def fresh_app(commands_enabled: bool = True):
     """Build an Application with an isolated container.
 
     ``Container.objects`` is a class-level dict shared across every
@@ -15,7 +15,7 @@ def fresh_app():
     framework ``TestCase``). Shadowing it with a fresh per-instance dict
     gives each test a clean container.
     """
-    app = Application(os.getcwd())
+    app = Application(os.getcwd(), commands_enabled=commands_enabled)
     app.objects = {}
     return app
 
@@ -69,6 +69,16 @@ class TestKernel(unittest.TestCase):
         for expected in ("serve", "key", "tinker", "down", "up"):
             self.assertIn(expected, names)
         self.assertGreaterEqual(len(names), 21)
+
+    def test_disabled_commands_registers_nothing(self):
+        # Application(commands_enabled=False) keeps the registry empty even
+        # though the framework kernel still attempts to add the built-in
+        # commands — handy for WSGI processes that never run the CLI.
+        app = fresh_app(commands_enabled=False)
+        Kernel(app).register()
+
+        self.assertFalse(app.make("commands").enabled)
+        self.assertEqual(app.make("commands").command_name, [])
 
     def test_registers_testing_under_test_runner(self):
         # The suite runs under pytest, so is_running_tests() is True and the

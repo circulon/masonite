@@ -57,5 +57,8 @@ class CoreKernel:
         self.application.bind("loader", Loader())
         self.application.bind(
             "commands",
-            CommandCapsule(CommandApplication("Masonite", __version__)),
+            CommandCapsule(
+                CommandApplication("Masonite", __version__),
+                enabled=self.application.commands_enabled,
+            ),
         )
