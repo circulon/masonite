@@ -3,6 +3,7 @@ import os
 import shutil
 import sys
 from datetime import datetime
+from urllib.parse import urlparse, urlunparse
 
 from werkzeug.serving import WSGIRequestHandler, run_simple
 
@@ -86,7 +87,38 @@ class ServeCommand(Command):
         super().__init__()
         self.app = application
 
+    def _sync_app_url(self, host, port):
+        """Point ``application.app_url`` at the address the server binds to.
+
+        URLs generated while the dev server runs (``url()``, ``asset()``, mail
+        links, ...) are derived from ``application.app_url``. When ``serve`` is
+        given a custom ``--host``/``--port`` we rewrite the host and port of the
+        configured URL — preserving its scheme, path and any credentials — so
+        those generated links actually resolve to the running server.
+        """
+        config = self.app.make("config")
+        app_url = config.get("application.app_url")
+        if not app_url:
+            return
+
+        parsed = urlparse(app_url)
+        if not parsed.scheme or not parsed.netloc:
+            # Not a full URL (e.g. just a host name) — leave it untouched
+            # rather than risk mangling it.
+            return
+
+        netloc = f"{host}:{port}"
+        if parsed.username:
+            credentials = parsed.username
+            if parsed.password:
+                credentials = f"{credentials}:{parsed.password}"
+            netloc = f"{credentials}@{netloc}"
+
+        config.set("application.app_url", urlunparse(parsed._replace(netloc=netloc)))
+
     def handle(self):
+        self._sync_app_url(self.option("host"), self.option("port"))
+
         if self.option("live-reload"):
             try:
                 from livereload import Server
