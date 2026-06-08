@@ -1,10 +1,18 @@
 import inspect
+import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
 from src.masonite.auth import Sign, MustVerifyEmail
 from src.masonite.exceptions import InvalidToken
 from src.masonite.middleware import VerifiesEmailMiddleware
+
+# `src.masonite.auth` re-exports the MustVerifyEmail *class*, which shadows the
+# module of the same name on the package — so `patch("src.masonite.auth."
+# "MustVerifyEmail.Sign")` (and even `import ... as`) resolves to the class and
+# fails depending on import order. Grab the real module from sys.modules so the
+# patch target is unambiguous.
+must_verify_email_module = sys.modules["src.masonite.auth.MustVerifyEmail"]
 
 # A stable Fernet key used only in tests so Sign() never touches wsgi
 TEST_KEY = "ODgUEaNUZqBweffQP9Rw1U_KEqL2EIcgjfQIsLPnL6g="
@@ -57,7 +65,9 @@ class TestMustVerifyEmailMixin(unittest.TestCase):
         request = MagicMock()
         request.environ = {"wsgi.url_scheme": "http", "HTTP_HOST": "localhost"}
 
-        with patch("src.masonite.auth.MustVerifyEmail.Sign", lambda: Sign(key=TEST_KEY)):
+        with patch.object(
+            must_verify_email_module, "Sign", lambda: Sign(key=TEST_KEY)
+        ):
             user.verify_email(mail_manager, request)
 
         mail_manager.mailable.assert_called_once()
@@ -70,7 +80,7 @@ class TestMustVerifyEmailMixin(unittest.TestCase):
         request = MagicMock()
         request.environ = {"wsgi.url_scheme": "http", "HTTP_HOST": "localhost"}
 
-        with patch("src.masonite.auth.MustVerifyEmail.Sign") as MockSign:
+        with patch.object(must_verify_email_module, "Sign") as MockSign:
             user.verify_email(mail_manager, request)
             raw_value = MockSign.return_value.sign.call_args[0][0]
 
@@ -89,7 +99,7 @@ class TestMustVerifyEmailMixin(unittest.TestCase):
         request = MagicMock()
         request.environ = {"wsgi.url_scheme": "http", "HTTP_HOST": "localhost"}
 
-        with patch("src.masonite.auth.MustVerifyEmail.Sign"):
+        with patch.object(must_verify_email_module, "Sign"):
             user.verify_email(mail_manager, request)
 
         # Mailable stores the recipient in _to (set via .to())
