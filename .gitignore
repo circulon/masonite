@@ -19,3 +19,6 @@ logs/
 # Test database is generated from migrations + seeds (tests/conftest.py)
 tests/integrations/databases/*.sqlite3
 /database.sqlite3
+
+# Claude Code local harness
+/.claude/
