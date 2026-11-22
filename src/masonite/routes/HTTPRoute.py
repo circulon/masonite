@@ -237,8 +237,16 @@ class HTTPRoute:
             # headers that would be returned if request's URL was requested with GET method instead
             # https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD
             if app.make("request").get_request_method().upper() == "HEAD":
-                real_response = app.make("response").view(response)
-                response = Response(app).status(204)
+                if isinstance(response, Response):
+                    # the controller already built a response (e.g. a redirect): keep
+                    # its status and headers, only the body is dropped
+                    real_response = response
+                    head_response = Response(app)
+                    head_response.status(real_response.get_status_code())
+                else:
+                    real_response = app.make("response").view(response)
+                    head_response = Response(app).status(204)
+                response = head_response
                 response.header_bag = real_response.header_bag
                 app.bind("response", response)
             return response

@@ -10,6 +10,7 @@ class TestHttpRequests(TestCase):
             Route.get("/test/users/@id", "WelcomeController@show_user"),
             Route.get("/test-with-input", "WelcomeController@form_with_input"),
             Route.get("/server-error", "WelcomeController@server_error"),
+            Route.get("/redirect-url", "WelcomeController@redirect_url"),
         )
 
     def test_csrf_request(self):
@@ -59,6 +60,17 @@ class TestHttpRequests(TestCase):
 
         response = self.head("/")
         response.assertNoContent()
+        for name, value in get_response_headers.items():
+            response.assertHasHeader(name, value)
+
+    def test_head_route_with_redirect(self):
+        get_response = self.get("/redirect-url")
+        get_response.assertRedirect("/")
+        get_response_headers = get_response.response.header_bag.to_dict()
+
+        response = self.head("/redirect-url")
+        self.assertEqual(response.response.get_status(), 302)
+        self.assertEqual(response.response.data(), b"")
         for name, value in get_response_headers.items():
             response.assertHasHeader(name, value)
 
